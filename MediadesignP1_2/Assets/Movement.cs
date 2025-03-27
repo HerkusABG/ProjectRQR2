@@ -172,7 +172,6 @@ public class Movement : MonoBehaviour
     {
        // if(jumpCoroutine == null)
         //{
-            Debug.Log("here");
             //StartCoroutine(areaCheckAccess.SetCanCheckAreaTrueCoroutine());
             canJump = false;
             canJumpAC = false;
@@ -232,7 +231,6 @@ public class Movement : MonoBehaviour
     {
         yield return new WaitForSeconds(waitTime);
         coyoteBool = false;
-        Debug.Log("HUHU" + waitTime);
     }
 
     private void DisableJumping()

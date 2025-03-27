@@ -49,11 +49,11 @@ public class RayScript : MonoBehaviour
                 if (rayHitInfo.transform.GetComponent<EnemyScript>() != null)
                 {
                     rayHitInfo.transform.GetComponent<EnemyScript>().EnemyDeath();
-                    Debug.Log("Enemy Dead");
+                   // Debug.Log("Enemy Dead");
                 }
                 else
                 {
-                    Debug.Log("false");
+                    //Debug.Log("false");
                 }
             }
         }

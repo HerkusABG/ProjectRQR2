@@ -29,6 +29,8 @@ public class AreaCheckScript : MonoBehaviour
     public TextMeshProUGUI groundText;
 
     Coroutine coyoteCoroutine;
+    [SerializeField]
+    CameraScript cameraScriptAccess;
 
     private void Start()
     {
@@ -78,7 +80,7 @@ public class AreaCheckScript : MonoBehaviour
             if(!movementAccess.canJumpAC && movementAccess.canJump)
             {
                 Debug.Log("setting");
-                //EditorApplication.isPaused = true;
+                cameraScriptAccess.CameraBounce();
                 movementAccess.canJumpAC = true;
             }
             if(coyoteCoroutine != null)
@@ -86,7 +88,6 @@ public class AreaCheckScript : MonoBehaviour
                 StopCoroutine(coyoteCoroutine);
                 coyoteCoroutine = null; 
             }
-            //movementAccess.JumpReset();
             if (DeathScript.isAlive)
             {
                 rigidbodyAccessACS.linearDamping = groundDrag;
@@ -96,8 +97,6 @@ public class AreaCheckScript : MonoBehaviour
         {
             groundText.text = "contact: NO";
             groundText.color = Color.red;
-            // if (canCheckArea)
-            //{
             movementAccess.isGrounded = false;
             if(coyoteCoroutine == null)
             {
@@ -107,7 +106,6 @@ public class AreaCheckScript : MonoBehaviour
             {
                 rigidbodyAccessACS.linearDamping = airDrag;
             }
-            //}
         }         
     }
 
