@@ -17,11 +17,15 @@ public class DeathScript : MonoBehaviour
     UiScript uiScriptAccess;
     AreaCheckScript areaCheckScriptAccess;
 
+    [SerializeField]
+    Restarter restarterAccess;
+
     [HideInInspector]
     public static bool isAlive;
 
     void Start()
     {
+        restarterAccess.restartEvent += ResetPlayerInvocation;
         isAlive = true;
         playerRigidbody = GetComponent<Rigidbody>();
         movementAccess = GetComponent<Movement>();
@@ -35,12 +39,11 @@ public class DeathScript : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.R))
         {
-            ResetPlayerInvocation();
+            //ResetPlayerInvocation();
         }
         else if (Input.GetKeyDown(KeyCode.T))
         {
             KillPlayer(new Vector3(10, 0, 10));
-           // EditorApplication.isPaused = true;
         }
     }
     void OnCollisionEnter(Collision collision)
@@ -79,6 +82,7 @@ public class DeathScript : MonoBehaviour
     private void ResetPlayer()
     {
         //movementAccess.enabled = true;
+        Debug.Log("resetting player!");
         isAlive = true;
         playerRigidbody.freezeRotation = true;
         uiScriptAccess.ToggleDeathScreen(false);
