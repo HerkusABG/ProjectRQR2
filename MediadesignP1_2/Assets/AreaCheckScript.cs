@@ -11,7 +11,7 @@ public class AreaCheckScript : MonoBehaviour
     public Transform groundRaycastLocator;
 
     public LayerMask areaCheckLayerMasks;
-
+    public ReferenceData referenceDataAccess;
 
     Vector3 raycastDirection;
 
@@ -39,13 +39,13 @@ public class AreaCheckScript : MonoBehaviour
         rigidbodyAccessACS = GetComponent<Rigidbody>();
         ChangeRaycastSourceLocation(-1.5f);
         canCheckArea = true;
-        //areaCheckLayerMasks;// = movementAccess.manoLayerMask;
     }
 
     private void Update()
     {
         groundRaycastLocator.rotation = Quaternion.Euler(new Vector3(0,0,0));
         GroundCheckVoid();
+        referenceDataAccess.playerGroundedLocation = FindGroundPoint();
     }
 
     public void ChangeRaycastSourceLocation(float newYpos)
@@ -109,6 +109,19 @@ public class AreaCheckScript : MonoBehaviour
         }         
     }
 
+    public Vector3 FindGroundPoint()
+    {
+        RaycastHit hitInfoFGP;
+        if (Physics.Raycast(groundRaycastLocator.position, Vector3.down, out hitInfoFGP, Mathf.Infinity, areaCheckLayerMasks))
+        {
+            return hitInfoFGP.point;
+        }
+        else
+        {
+            return transform.position;
+        }
+        
+    }
     public bool CeilingCheck()
     {
         float ceilingJumpSum = 0;
