@@ -16,7 +16,7 @@ public class EnemyScript : MonoBehaviour
     Transform playerTransformES;
     Transform playerCameraTransform;
 
-    bool isAggressive;
+    public bool isAggressive;
     bool isEnemyAlive;
     public bool canReachPlayer;
 
@@ -45,8 +45,23 @@ public class EnemyScript : MonoBehaviour
 
     public Transform target;
     Vector3 lastLocation;
+
+    //[SerializeField]
+    Animator enemyAnimator;
+
+    public bool isPunching;
+
+    public GameObject myMesh;
+
+    public GameObject sphereReference;
+    public Transform punchSphereLocation;
+
+    public float punchRange;
+
+    public bool isAgentStopped;
     private void Start()
     {
+        enemyAnimator = GetComponentInChildren<Animator>();
         playerCameraTransform = referenceDataAccess.cameraReference;
         patrolIndex = 0;
         restarterAccess.restartEvent += ResetEnemy;
@@ -54,10 +69,7 @@ public class EnemyScript : MonoBehaviour
 
         navmeshAgentAccess = GetComponent<NavMeshAgent>();
         playerTransformES = referenceDataAccess.playerTransform;
-        if(enemyBehaviourId == 1)
-        {
-            navmeshAgentAccess.speed = patrolSpeed;
-        }
+        
         SaveEnemyData();
         ResetEnemy();
     }
@@ -66,6 +78,7 @@ public class EnemyScript : MonoBehaviour
     {
         if (!navmeshAgentAccess.pathPending && navmeshAgentAccess.remainingDistance <= navmeshAgentAccess.stoppingDistance)
         {
+            
             Vector3 desiredDirection = navmeshAgentAccess.steeringTarget - transform.position;
             desiredDirection.y = 0;
             if (desiredDirection.sqrMagnitude > 0.01f)
@@ -73,8 +86,22 @@ public class EnemyScript : MonoBehaviour
                 Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
             }
+            Debug.Log("Punching distance");
+            if (isAggressive)
+            {
+                navmeshAgentAccess.isStopped = true;
+                isPunching = true;
+                enemyAnimator.SetBool("isPunching", true);
+            }
         }
+        /*else
+        {
+            isPunching = false;
+            enemyAnimator.SetBool("isPunching", false);
+        } */
+        isAgentStopped = navmeshAgentAccess.isStopped;
         debugFloat = Vector3.Dot(transform.forward, playerCameraTransform.forward);
+        debugString = navmeshAgentAccess.remainingDistance.ToString();
         if(isEnemyAlive)
         {
             if (isAggressive)
@@ -82,17 +109,21 @@ public class EnemyScript : MonoBehaviour
                 if(HasDirectLineWithPlayer())
                 {
                     canReachPlayer = NavMesh.CalculatePath(transform.position, playerTransformES.position, NavMesh.AllAreas, path);
-                    navmeshAgentAccess.SetPath(path);
+                    //navmeshAgentAccess.SetPath(path);
                     if (canReachPlayer)
                     {
+                        Debug.Log("new");
                         navmeshAgentAccess.SetPath(path);
+
                     }
                     else if (NavMesh.CalculatePath(transform.position, referenceDataAccess.playerGroundedLocation, NavMesh.AllAreas, path))
                     {
+                        Debug.Log("new 2");
                         navmeshAgentAccess.SetPath(path);
                     }
                     else
                     {
+                        Debug.Log("new 3");
                         navmeshAgentAccess.SetDestination(transform.position + (playerTransformES.position - transform.position));
                     }
                     lastLocation = playerTransformES.position;
@@ -114,15 +145,15 @@ public class EnemyScript : MonoBehaviour
             {
                 if (Vector3.Distance(playerTransformES.position, transform.position) < 18 && Vector3.Dot(transform.forward, playerCameraTransform.forward) <= 0.3f && HasDirectLineWithPlayer())
                 {
-                    Debug.Log("enemy angry");
                     isAggressive = true;
                     navmeshAgentAccess.speed = aggressiveSpeed;
+                    navmeshAgentAccess.isStopped = false;
                 }
                 else if (enemyBehaviourId == 1)
                 {
                     canReachPlayer = NavMesh.CalculatePath(transform.position, patrolPointList[patrolIndex].position, NavMesh.AllAreas, path);
                     navmeshAgentAccess.SetPath(path);
-                    if (Vector3.Distance(transform.position, patrolPointList[patrolIndex].position) < 3)
+                    if (Vector3.Distance(transform.position, patrolPointList[patrolIndex].position) < navmeshAgentAccess.stoppingDistance + 0.5f)
                     {
                         if (patrolIndex + 1 >= patrolPointList.Count)
                         {
@@ -139,28 +170,58 @@ public class EnemyScript : MonoBehaviour
                     wanderingTime += Time.deltaTime;
                     if(wanderingTime >= wanderingTimeThreshold)
                     {
-                        wanderingTimeThreshold = Random.Range(1, 3f);
+                        wanderingTimeThreshold = Random.Range(1f, 5f);
                         wanderingTime = 0;
                         GoToNewSpot();
                     }
                 }
             }
+            EnemyAnimationCheck();
         }
     }
-    private void UniqueDrawRay()
-    {
 
+    public void DidEnemyHitPlayer()
+    {
+       GameObject mySphere = Instantiate(sphereReference, punchSphereLocation.position + punchSphereLocation.forward, punchSphereLocation.rotation);
+        mySphere.SetActive(true);
+        mySphere.transform.localScale = new Vector3(punchRange * 1.5f, punchRange, punchRange * 3.5f);
+    }
+    public void CanContinueToPunch()
+    {
+       // Debug.Log($"Remaining distance is: {navmeshAgentAccess.remainingDistance}");
+       // Debug.Log($"Stopping distance is: {navmeshAgentAccess.stoppingDistance}");
+
+        if (navmeshAgentAccess.remainingDistance >= navmeshAgentAccess.stoppingDistance)
+        {
+            Debug.Log("setting to false");
+            isPunching = false;
+            enemyAnimator.SetBool("isPunching", false);
+            navmeshAgentAccess.isStopped = false;
+        }
+    }
+    private void EnemyAnimationCheck()
+    {
+        if (navmeshAgentAccess.velocity.magnitude <= 0)
+        {
+            myMesh.GetComponent<Renderer>().material.color = Color.red;
+            Debug.Log("falsing");
+            enemyAnimator.SetBool("isWalking", false);
+        }
+        else
+        {
+            myMesh.GetComponent<Renderer>().material.color = Color.white;
+            Debug.Log("trueing");
+            enemyAnimator.SetBool("isWalking", true);
+        }
     }
     private void GoToNewSpot()
     {
-        Debug.Log("Go to new spot");
         RaycastHit hitInfo;
         Vector3 enemyDirection;
         Vector3 goVectorPos = transform.position;
         enemyDirection = new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f));
         if (Physics.Raycast(transform.position, enemyDirection, out hitInfo, 20f, playerDetectionLayerMask))
         {
-            Debug.Log("console");
             Debug.DrawRay(transform.position, enemyDirection * 5, Color.white, 5);
             goVectorPos = new Vector3(hitInfo.point.x, transform.position.y, hitInfo.point.z);
             rayTrueDistance = Vector3.Distance(transform.position, goVectorPos);
@@ -173,12 +234,6 @@ public class EnemyScript : MonoBehaviour
             Debug.DrawRay(transform.position, enemyDirection * 5, Color.red, 5);
            
         }
-       /* do
-        {
-            
-        } while (rayTrueDistance < 2.5f); */
-        
-        
         navmeshAgentAccess.SetDestination(goVectorPos);
     }
     private bool HasDirectLineWithPlayer()
@@ -186,7 +241,6 @@ public class EnemyScript : MonoBehaviour
         RaycastHit hitInfo;
         if(Physics.Raycast(transform.position, (playerTransformES.position - transform.position), out hitInfo, Mathf.Infinity, playerDetectionLayerMask))
         {
-            Debug.Log(hitInfo.transform.gameObject);
             if(hitInfo.transform.GetComponent<Movement>())
             {
                 return true;
@@ -209,20 +263,28 @@ public class EnemyScript : MonoBehaviour
     }
     private void ResetEnemy()
     {
+        isPunching = false;
         isAggressive = false;
         isEnemyAlive = true;
         transform.position = savedEnemyPosition;
         transform.rotation = savedEnemyRotation;
         navmeshAgentAccess.isStopped = false;
-        if (enemyBehaviourId == 1)
+        
+        if(enemyBehaviourId == 0)
+        {
+            //standstill
+            navmeshAgentAccess.isStopped = true;
+
+           // navmeshAgentAccess.SetDestination(transform.position);
+        }
+        else if(enemyBehaviourId == 1)
         {
             //patrolling
             navmeshAgentAccess.speed = patrolSpeed;
         }
-        else
+        else if (enemyBehaviourId == 2)
         {
-            //standstill
-            navmeshAgentAccess.SetDestination(transform.position);
+            navmeshAgentAccess.speed = patrolSpeed;
         }
     }
 

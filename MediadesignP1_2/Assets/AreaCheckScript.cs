@@ -79,7 +79,6 @@ public class AreaCheckScript : MonoBehaviour
             movementAccess.coyoteBool = true;
             if(!movementAccess.canJumpAC && movementAccess.canJump)
             {
-                Debug.Log("setting");
                 cameraScriptAccess.CameraBounce();
                 movementAccess.canJumpAC = true;
             }

@@ -79,7 +79,6 @@ public class CameraScript : MonoBehaviour
     public IEnumerator CameraBounceCoroutine()
     {
         coroutineRunning = true;
-        Debug.Log("cam buonce");
         StartCoroutine(MovementCoroutine(0.05f, transform.localPosition + new Vector3(0, -0.4f, 0), false));
         //transform.localPosition += new Vector3(0, -0.4f, 0);
         yield return new WaitForSeconds(0.05f);
@@ -89,7 +88,6 @@ public class CameraScript : MonoBehaviour
     }
     private IEnumerator MovementCoroutine(float duration, Vector3 endPos, bool shouldDisableBool)
     {
-        Debug.Log("Movement coroutine");
         float myTime = 0;
         float fraction = myTime / duration;
         Vector3 startPos = transform.localPosition;
