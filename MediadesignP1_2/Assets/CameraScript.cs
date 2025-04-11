@@ -19,12 +19,18 @@ public class CameraScript : MonoBehaviour
 
     Coroutine bounceCoroutine;
 
+    Restarter restarterAccess;
+
+    DeathScript deathScriptAccess;
+
     private void Start()
     {
+        deathScriptAccess = GetComponentInParent<DeathScript>();
+        restarterAccess = deathScriptAccess.restarterAccess;
+        restarterAccess.restartEvent += ResetCameraRotation;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         multiplier = 1f;
-        //StartCoroutine(MovementCoroutine(3f, transform.localPosition + new Vector3(0, 10, 0)));
     }
 
 
@@ -35,34 +41,33 @@ public class CameraScript : MonoBehaviour
     public bool coroutineRunning;
     private void Update()
     {
-        float mouseX = Input.GetAxisRaw("Mouse X") * Time.fixedDeltaTime * sensX;
-        float mouseY = Input.GetAxisRaw("Mouse Y") * Time.fixedDeltaTime * sensY;
-
-        yRotation += mouseX;
-        xRotation -= mouseY;
-
-        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
-
-
-
-
-        if (movementAccess.horizontalInputFloat == 0)
+        if(DeathScript.isAlive)
         {
-            target.localEulerAngles = new Vector3(target.localEulerAngles.x, target.localEulerAngles.y, 0);
-        }
-        else if (movementAccess.horizontalInputFloat == 1)
-        {
-            target.localEulerAngles = new Vector3(target.localEulerAngles.x, target.localEulerAngles.y, -2.5f);
-        }
-        else if (movementAccess.horizontalInputFloat == -1)
-        {
-            target.localEulerAngles = new Vector3(target.localEulerAngles.x, target.localEulerAngles.y, 2.5f);
-        }
-        target.rotation = Quaternion.Euler(xRotation, yRotation, target.localEulerAngles.z);
-        towardsQuaternion = Quaternion.RotateTowards(transform.localRotation, target.localRotation, speed * Time.deltaTime);
+            float mouseX = Input.GetAxisRaw("Mouse X") * Time.fixedDeltaTime * sensX;
+            float mouseY = Input.GetAxisRaw("Mouse Y") * Time.fixedDeltaTime * sensY;
+
+            yRotation += mouseX;
+            xRotation -= mouseY;
+
+            xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+            if (movementAccess.horizontalInputFloat == 0)
+            {
+                target.localEulerAngles = new Vector3(target.localEulerAngles.x, target.localEulerAngles.y, 0);
+            }
+            else if (movementAccess.horizontalInputFloat == 1)
+            {
+                target.localEulerAngles = new Vector3(target.localEulerAngles.x, target.localEulerAngles.y, -2.5f);
+            }
+            else if (movementAccess.horizontalInputFloat == -1)
+            {
+                target.localEulerAngles = new Vector3(target.localEulerAngles.x, target.localEulerAngles.y, 2.5f);
+            }
+            target.rotation = Quaternion.Euler(xRotation, yRotation, target.localEulerAngles.z);
+            towardsQuaternion = Quaternion.RotateTowards(transform.localRotation, target.localRotation, speed * Time.deltaTime);
 
 
-        transform.rotation = Quaternion.Euler(xRotation, yRotation, towardsQuaternion.eulerAngles.z);
+            transform.rotation = Quaternion.Euler(xRotation, yRotation, towardsQuaternion.eulerAngles.z);
+        }    
     }
     public void CameraBounce()
     {
@@ -71,10 +76,7 @@ public class CameraScript : MonoBehaviour
             StopCoroutine(bounceCoroutine);
             transform.localPosition = new Vector3(0, 0, 0);
         }
-        //if (!coroutineRunning)
-        //{
-            bounceCoroutine = StartCoroutine(CameraBounceCoroutine());
-        //}
+        bounceCoroutine = StartCoroutine(CameraBounceCoroutine());
     }
     public IEnumerator CameraBounceCoroutine()
     {
@@ -105,4 +107,8 @@ public class CameraScript : MonoBehaviour
         }
     }
 
+    private void ResetCameraRotation()
+    {
+        transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, 0);
+    }
 }

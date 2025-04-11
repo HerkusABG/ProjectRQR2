@@ -45,11 +45,9 @@ public class RayScript : MonoBehaviour
                 hitMarkerList[i].SetActive(true);
                 hitMarkerList[i].transform.position = rayHitInfo.point;
                 particleEmitterList[i].GetComponent<ParticleSystem>().Emit(5);
-                Debug.Log(rayHitInfo.transform.name);
                 if (rayHitInfo.transform.GetComponent<EnemyScript>() != null)
                 {
                     rayHitInfo.transform.GetComponent<EnemyScript>().EnemyDeath();
-                   // Debug.Log("Enemy Dead");
                 }
                 else
                 {

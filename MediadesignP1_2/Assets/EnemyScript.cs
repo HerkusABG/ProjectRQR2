@@ -46,7 +46,6 @@ public class EnemyScript : MonoBehaviour
     public Transform target;
     Vector3 lastLocation;
 
-    //[SerializeField]
     Animator enemyAnimator;
 
     public bool isPunching;
@@ -59,6 +58,7 @@ public class EnemyScript : MonoBehaviour
     public float punchRange;
 
     public bool isAgentStopped;
+    public Transform knockbackRaycastTransform;
     private void Start()
     {
         enemyAnimator = GetComponentInChildren<Animator>();
@@ -76,118 +76,110 @@ public class EnemyScript : MonoBehaviour
 
     private void Update()
     {
-        if (!navmeshAgentAccess.pathPending && navmeshAgentAccess.remainingDistance <= navmeshAgentAccess.stoppingDistance)
+        if (Input.GetKeyDown(KeyCode.Y))
         {
-            
-            Vector3 desiredDirection = navmeshAgentAccess.steeringTarget - transform.position;
-            desiredDirection.y = 0;
-            if (desiredDirection.sqrMagnitude > 0.01f)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
-            }
-            Debug.Log("Punching distance");
-            if (isAggressive)
-            {
-                navmeshAgentAccess.isStopped = true;
-                isPunching = true;
-                enemyAnimator.SetBool("isPunching", true);
-            }
+           // KnockbackDeath();
         }
-        /*else
+        if (isEnemyAlive)
         {
-            isPunching = false;
-            enemyAnimator.SetBool("isPunching", false);
-        } */
-        isAgentStopped = navmeshAgentAccess.isStopped;
-        debugFloat = Vector3.Dot(transform.forward, playerCameraTransform.forward);
-        debugString = navmeshAgentAccess.remainingDistance.ToString();
-        if(isEnemyAlive)
-        {
-            if (isAggressive)
+            if (!navmeshAgentAccess.pathPending && navmeshAgentAccess.remainingDistance <= navmeshAgentAccess.stoppingDistance)
             {
-                if(HasDirectLineWithPlayer())
-                {
-                    canReachPlayer = NavMesh.CalculatePath(transform.position, playerTransformES.position, NavMesh.AllAreas, path);
-                    //navmeshAgentAccess.SetPath(path);
-                    if (canReachPlayer)
-                    {
-                        Debug.Log("new");
-                        navmeshAgentAccess.SetPath(path);
 
-                    }
-                    else if (NavMesh.CalculatePath(transform.position, referenceDataAccess.playerGroundedLocation, NavMesh.AllAreas, path))
-                    {
-                        Debug.Log("new 2");
-                        navmeshAgentAccess.SetPath(path);
-                    }
-                    else
-                    {
-                        Debug.Log("new 3");
-                        navmeshAgentAccess.SetDestination(transform.position + (playerTransformES.position - transform.position));
-                    }
-                    lastLocation = playerTransformES.position;
-                }
-                else
+                Vector3 desiredDirection = navmeshAgentAccess.steeringTarget - transform.position;
+                desiredDirection.y = 0;
+                if (desiredDirection.sqrMagnitude > 0.01f)
                 {
-                    Debug.Log("new 4");
-                    canReachPlayer = NavMesh.CalculatePath(transform.position, lastLocation, NavMesh.AllAreas, path);
-                    if (canReachPlayer)
-                    {
-                        Debug.Log("new 5");
-                        navmeshAgentAccess.SetPath(path);
-                    }
-                    else
-                    {
-                        Debug.Log("new 6");
-                    }
-                    //navmeshAgentAccess.SetDestination(lastLocation);
-                    if(Vector3.Distance(transform.position, lastLocation) < 5)
-                    {
-                        if (!HasDirectLineWithPlayer())
-                        {
-                            isAggressive = false;
-                            enemyBehaviourId = 2;
-                        }
-                    }
+                    Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+                }
+                if (isAggressive)
+                {
+                    navmeshAgentAccess.isStopped = true;
+                    isPunching = true;
+                    enemyAnimator.SetBool("isPunching", true);
                 }
             }
-            else
+            isAgentStopped = navmeshAgentAccess.isStopped;
+            debugFloat = Vector3.Dot(transform.forward, playerCameraTransform.forward);
+            debugString = navmeshAgentAccess.remainingDistance.ToString();
+            if (isEnemyAlive)
             {
-                if (Vector3.Distance(playerTransformES.position, transform.position) < 18 && Vector3.Dot(transform.forward, playerCameraTransform.forward) <= 0.3f && HasDirectLineWithPlayer())
+                if (isAggressive)
                 {
-                    isAggressive = true;
-                    navmeshAgentAccess.speed = aggressiveSpeed;
-                    navmeshAgentAccess.isStopped = false;
-                }
-                else if (enemyBehaviourId == 1)
-                {
-                    canReachPlayer = NavMesh.CalculatePath(transform.position, patrolPointList[patrolIndex].position, NavMesh.AllAreas, path);
-                    navmeshAgentAccess.SetPath(path);
-                    if (Vector3.Distance(transform.position, patrolPointList[patrolIndex].position) < navmeshAgentAccess.stoppingDistance + 0.5f)
+                    if (HasDirectLineWithPlayer())
                     {
-                        if (patrolIndex + 1 >= patrolPointList.Count)
+                        canReachPlayer = NavMesh.CalculatePath(transform.position, playerTransformES.position, NavMesh.AllAreas, path);
+                        //navmeshAgentAccess.SetPath(path);
+                        if (canReachPlayer)
                         {
-                            patrolIndex = 0;
+                            navmeshAgentAccess.SetPath(path);
+
+                        }
+                        else if (NavMesh.CalculatePath(transform.position, referenceDataAccess.playerGroundedLocation, NavMesh.AllAreas, path))
+                        {
+                            navmeshAgentAccess.SetPath(path);
                         }
                         else
                         {
-                            patrolIndex++;
+                            navmeshAgentAccess.SetDestination(transform.position + (playerTransformES.position - transform.position));
+                        }
+                        lastLocation = playerTransformES.position;
+                    }
+                    else
+                    {
+                        Debug.Log("new 4");
+                        canReachPlayer = NavMesh.CalculatePath(transform.position, lastLocation, NavMesh.AllAreas, path);
+                        if (canReachPlayer)
+                        {
+                            navmeshAgentAccess.SetPath(path);
+                        }
+                        if (Vector3.Distance(transform.position, lastLocation) < 5)
+                        {
+                            if (!HasDirectLineWithPlayer())
+                            {
+                                isAggressive = false;
+                                enemyBehaviourId = 2;
+                            }
                         }
                     }
                 }
-                else if(enemyBehaviourId == 2)
+                else
                 {
-                    wanderingTime += Time.deltaTime;
-                    if(wanderingTime >= wanderingTimeThreshold)
+                    if (Vector3.Distance(playerTransformES.position, transform.position) < 18 && Vector3.Dot(transform.forward, playerCameraTransform.forward) <= 0.3f && HasDirectLineWithPlayer())
                     {
-                        wanderingTimeThreshold = Random.Range(1f, 5f);
-                        wanderingTime = 0;
-                        GoToNewSpot();
+                        isAggressive = true;
+                        navmeshAgentAccess.speed = aggressiveSpeed;
+                        navmeshAgentAccess.isStopped = false;
+                    }
+                    else if (enemyBehaviourId == 1)
+                    {
+                        canReachPlayer = NavMesh.CalculatePath(transform.position, patrolPointList[patrolIndex].position, NavMesh.AllAreas, path);
+                        navmeshAgentAccess.SetPath(path);
+                        if (Vector3.Distance(transform.position, patrolPointList[patrolIndex].position) < navmeshAgentAccess.stoppingDistance + 0.5f)
+                        {
+                            if (patrolIndex + 1 >= patrolPointList.Count)
+                            {
+                                patrolIndex = 0;
+                            }
+                            else
+                            {
+                                patrolIndex++;
+                            }
+                        }
+                    }
+                    else if (enemyBehaviourId == 2)
+                    {
+                        wanderingTime += Time.deltaTime;
+                        if (wanderingTime >= wanderingTimeThreshold)
+                        {
+                            wanderingTimeThreshold = Random.Range(1f, 5f);
+                            wanderingTime = 0;
+                            GoToNewSpot();
+                        }
                     }
                 }
+                EnemyAnimationCheck();
             }
-            EnemyAnimationCheck();
         }
     }
 
@@ -199,9 +191,8 @@ public class EnemyScript : MonoBehaviour
     }
     public void CanContinueToPunch()
     {
-       // Debug.Log($"Remaining distance is: {navmeshAgentAccess.remainingDistance}");
-       // Debug.Log($"Stopping distance is: {navmeshAgentAccess.stoppingDistance}");
-
+        // Debug.Log($"Remaining distance is: {navmeshAgentAccess.remainingDistance}");
+        // Debug.Log($"Stopping distance is: {navmeshAgentAccess.stoppingDistance}");
         if (navmeshAgentAccess.remainingDistance >= navmeshAgentAccess.stoppingDistance)
         {
             Debug.Log("setting to false");
@@ -215,13 +206,11 @@ public class EnemyScript : MonoBehaviour
         if (navmeshAgentAccess.velocity.magnitude <= 0)
         {
             myMesh.GetComponent<Renderer>().material.color = Color.red;
-            Debug.Log("falsing");
             enemyAnimator.SetBool("isWalking", false);
         }
         else
         {
             myMesh.GetComponent<Renderer>().material.color = Color.white;
-            Debug.Log("trueing");
             enemyAnimator.SetBool("isWalking", true);
         }
     }
@@ -236,7 +225,6 @@ public class EnemyScript : MonoBehaviour
             Debug.DrawRay(transform.position, enemyDirection * 5, Color.white, 5);
             goVectorPos = new Vector3(hitInfo.point.x, transform.position.y, hitInfo.point.z);
             rayTrueDistance = Vector3.Distance(transform.position, goVectorPos);
-            target.position = hitInfo.point;
         }
         else
         {
@@ -269,16 +257,62 @@ public class EnemyScript : MonoBehaviour
     }
     public void EnemyDeath()
     {
-        isEnemyAlive = false;
-        navmeshAgentAccess.isStopped = true;
+        if(isEnemyAlive)
+        {
+            isEnemyAlive = false;
+            navmeshAgentAccess.isStopped = true;
+            navmeshAgentAccess.enabled = false;
+            KnockbackDeath();
+            enemyAnimator.Play("Base Layer.Z0_Death", 0, 0f);
+        }
+    }
+
+    private void KnockbackDeath()
+    {
+        Debug.Log("knockback death 1");
+        StartCoroutine(KnockbackCoroutine(2));
+    }
+
+    private IEnumerator KnockbackCoroutine(float duration)
+    {
+        Debug.Log("knockback death 2");
+
+        float timePassed = 0;
+        RaycastHit knockbackHitInfo;
+        Vector3 endPoint;
+        if(Physics.Raycast(knockbackRaycastTransform.position, -transform.forward, out knockbackHitInfo, 7, playerDetectionLayerMask))
+        {
+            Debug.Log("knockback death 3");
+
+            endPoint = knockbackHitInfo.point + transform.forward * 3.5f;
+            target.position = endPoint;
+
+        }
+        else
+        {
+            Debug.Log("knockback death 4");
+
+            endPoint = knockbackRaycastTransform.position - transform.forward * 7f;
+            target.position = endPoint;
+
+        }
+        endPoint = new Vector3(endPoint.x, transform.position.y, endPoint.z);
+        while (timePassed <= duration)
+        {
+            transform.position = Vector3.Lerp(transform.position, endPoint, timePassed / duration);
+            yield return new WaitForEndOfFrame();
+            timePassed += Time.deltaTime;
+        }
     }
     private void ResetEnemy()
     {
+        enemyAnimator.Play("Base Layer.ZC0_Idle", 0, 0f);
         isPunching = false;
         isAggressive = false;
         isEnemyAlive = true;
         transform.position = savedEnemyPosition;
         transform.rotation = savedEnemyRotation;
+        navmeshAgentAccess.enabled = true;
         navmeshAgentAccess.isStopped = false;
         
         if(enemyBehaviourId == 0)

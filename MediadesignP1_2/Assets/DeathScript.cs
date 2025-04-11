@@ -17,8 +17,8 @@ public class DeathScript : MonoBehaviour
     UiScript uiScriptAccess;
     AreaCheckScript areaCheckScriptAccess;
 
-    [SerializeField]
-    Restarter restarterAccess;
+    //[SerializeField]
+    public Restarter restarterAccess;
 
     [HideInInspector]
     public static bool isAlive;
@@ -37,11 +37,7 @@ public class DeathScript : MonoBehaviour
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.R))
-        {
-            //ResetPlayerInvocation();
-        }
-        else if (Input.GetKeyDown(KeyCode.T))
+        if (Input.GetKeyDown(KeyCode.T))
         {
             KillPlayer(new Vector3(10, 0, 10));
         }
