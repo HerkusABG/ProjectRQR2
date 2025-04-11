@@ -130,7 +130,18 @@ public class EnemyScript : MonoBehaviour
                 }
                 else
                 {
-                    navmeshAgentAccess.SetDestination(lastLocation);
+                    Debug.Log("new 4");
+                    canReachPlayer = NavMesh.CalculatePath(transform.position, lastLocation, NavMesh.AllAreas, path);
+                    if (canReachPlayer)
+                    {
+                        Debug.Log("new 5");
+                        navmeshAgentAccess.SetPath(path);
+                    }
+                    else
+                    {
+                        Debug.Log("new 6");
+                    }
+                    //navmeshAgentAccess.SetDestination(lastLocation);
                     if(Vector3.Distance(transform.position, lastLocation) < 5)
                     {
                         if (!HasDirectLineWithPlayer())
