@@ -59,6 +59,8 @@ public class EnemyScript : MonoBehaviour
 
     public bool isAgentStopped;
     public Transform knockbackRaycastTransform;
+
+    public GameObject deathDummy;
     private void Start()
     {
         enemyAnimator = GetComponentInChildren<Animator>();
@@ -76,10 +78,10 @@ public class EnemyScript : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Y))
-        {
-           // KnockbackDeath();
-        }
+       // if (Input.GetKeyDown(KeyCode.Y))
+        //{
+          // KnockbackDeath();
+       // }
         if (isEnemyAlive)
         {
             if (!navmeshAgentAccess.pathPending && navmeshAgentAccess.remainingDistance <= navmeshAgentAccess.stoppingDistance)
@@ -191,14 +193,15 @@ public class EnemyScript : MonoBehaviour
     }
     public void CanContinueToPunch()
     {
-        // Debug.Log($"Remaining distance is: {navmeshAgentAccess.remainingDistance}");
-        // Debug.Log($"Stopping distance is: {navmeshAgentAccess.stoppingDistance}");
-        if (navmeshAgentAccess.remainingDistance >= navmeshAgentAccess.stoppingDistance)
+        if(isEnemyAlive && isAggressive)
         {
-            Debug.Log("setting to false");
-            isPunching = false;
-            enemyAnimator.SetBool("isPunching", false);
-            navmeshAgentAccess.isStopped = false;
+            if (navmeshAgentAccess.remainingDistance >= navmeshAgentAccess.stoppingDistance)
+            {
+                Debug.Log("setting to false");
+                isPunching = false;
+                enemyAnimator.SetBool("isPunching", false);
+                navmeshAgentAccess.isStopped = false;
+            }
         }
     }
     private void EnemyAnimationCheck()
@@ -238,7 +241,7 @@ public class EnemyScript : MonoBehaviour
     private bool HasDirectLineWithPlayer()
     {
         RaycastHit hitInfo;
-        if(Physics.Raycast(transform.position, (playerTransformES.position - transform.position), out hitInfo, Mathf.Infinity, playerDetectionLayerMask))
+        if(Physics.Raycast(transform.position, (playerTransformES.position - transform.position), out hitInfo, 35, playerDetectionLayerMask))
         {
             if(hitInfo.transform.GetComponent<Movement>())
             {
@@ -262,15 +265,20 @@ public class EnemyScript : MonoBehaviour
             isEnemyAlive = false;
             navmeshAgentAccess.isStopped = true;
             navmeshAgentAccess.enabled = false;
+            
             KnockbackDeath();
-            enemyAnimator.Play("Base Layer.Z0_Death", 0, 0f);
+            transform.position = new Vector3(0, -3000, 0);
+            //enemyAnimator.Play("Base Layer.Z0_Death", 0, 0f);
         }
     }
 
     private void KnockbackDeath()
     {
-        Debug.Log("knockback death 1");
-        StartCoroutine(KnockbackCoroutine(2));
+        //Debug.Log("knockback death 1");
+        //StartCoroutine(KnockbackCoroutine(10));
+        deathDummy.transform.position = transform.position;
+        deathDummy.SetActive(true);
+        deathDummy.GetComponent<KnockbackEnemy>().DummySetUp();
     }
 
     private IEnumerator KnockbackCoroutine(float duration)
@@ -279,43 +287,61 @@ public class EnemyScript : MonoBehaviour
 
         float timePassed = 0;
         RaycastHit knockbackHitInfo;
+        RaycastHit downwardHitInfo;
+
         Vector3 endPoint;
-        if(Physics.Raycast(knockbackRaycastTransform.position, -transform.forward, out knockbackHitInfo, 7, playerDetectionLayerMask))
+        if(Physics.Raycast(knockbackRaycastTransform.position, -transform.forward, out knockbackHitInfo, 30, playerDetectionLayerMask))
         {
             Debug.Log("knockback death 3");
+            if(Physics.Raycast(knockbackHitInfo.point, Vector3.down, out downwardHitInfo, Mathf.Infinity, playerDetectionLayerMask))
+            {
+                Debug.Log("knockback death 4");
 
-            endPoint = knockbackHitInfo.point + transform.forward * 3.5f;
-            target.position = endPoint;
+                endPoint = downwardHitInfo.point + transform.forward * 3.5f;
+                endPoint = new Vector3(endPoint.x, downwardHitInfo.point.y + transform.localScale.y * 0.5f, endPoint.z);
 
+                target.position = endPoint;
+            }
+            else
+            {
+                Debug.Log("knockback death 5");
+
+                endPoint = knockbackHitInfo.point + transform.forward * 3.5f;
+                target.position = endPoint;
+            }
         }
         else
         {
-            Debug.Log("knockback death 4");
 
             endPoint = knockbackRaycastTransform.position - transform.forward * 7f;
             target.position = endPoint;
+            endPoint = new Vector3(endPoint.x, transform.position.y, endPoint.z);
 
         }
-        endPoint = new Vector3(endPoint.x, transform.position.y, endPoint.z);
         while (timePassed <= duration)
         {
-            transform.position = Vector3.Lerp(transform.position, endPoint, timePassed / duration);
+            transform.position = Vector3.Slerp(transform.position, endPoint, timePassed / duration);
             yield return new WaitForEndOfFrame();
             timePassed += Time.deltaTime;
         }
     }
+
     private void ResetEnemy()
     {
+        Debug.Log("reset");
         enemyAnimator.Play("Base Layer.ZC0_Idle", 0, 0f);
         isPunching = false;
+        enemyAnimator.SetBool("isPunching", false);
+        enemyAnimator.SetBool("isWalking", false);
         isAggressive = false;
         isEnemyAlive = true;
         transform.position = savedEnemyPosition;
         transform.rotation = savedEnemyRotation;
         navmeshAgentAccess.enabled = true;
         navmeshAgentAccess.isStopped = false;
-        
-        if(enemyBehaviourId == 0)
+        deathDummy.SetActive(false);
+        navmeshAgentAccess.SetDestination(transform.position);
+        if (enemyBehaviourId == 0)
         {
             //standstill
             navmeshAgentAccess.isStopped = true;

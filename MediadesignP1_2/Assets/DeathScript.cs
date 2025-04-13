@@ -78,7 +78,6 @@ public class DeathScript : MonoBehaviour
     private void ResetPlayer()
     {
         //movementAccess.enabled = true;
-        Debug.Log("resetting player!");
         isAlive = true;
         playerRigidbody.freezeRotation = true;
         uiScriptAccess.ToggleDeathScreen(false);
